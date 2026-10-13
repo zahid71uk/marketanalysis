@@ -62,6 +62,10 @@ public class MarketAnalysisService {
         return new WhatIfResponse(response.predictedPrice());
     }
 
+    public void invalidateDatasetCache() {
+        datasetClient.evictHousesCache();
+    }
+
     private List<HousingRecord> filter(List<HousingRecord> houses, MarketFilter filter) {
         validateRange(filter.minSquareFootage(), filter.maxSquareFootage(), "square footage");
         validateRange(filter.minBedrooms(), filter.maxBedrooms(), "bedrooms");

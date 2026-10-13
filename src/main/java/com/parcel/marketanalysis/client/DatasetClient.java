@@ -4,6 +4,7 @@ import com.parcel.marketanalysis.exception.UpstreamUnavailableException;
 import com.parcel.marketanalysis.model.DatasetResponse;
 import com.parcel.marketanalysis.model.HousingRecord;
 import java.util.List;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -31,5 +32,9 @@ public class DatasetClient {
         } catch (RestClientException | IllegalStateException exception) {
             throw new UpstreamUnavailableException("Dataset service", exception);
         }
+    }
+
+    @CacheEvict(cacheNames = "housingDataset", allEntries = true)
+    public void evictHousesCache() {
     }
 }

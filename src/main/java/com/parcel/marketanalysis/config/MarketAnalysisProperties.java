@@ -10,5 +10,6 @@ public record MarketAnalysisProperties(
 	URI estimatorApiUrl,
 	Duration cacheTtl,
 	Duration connectTimeout,
-	Duration readTimeout) {
+	Duration readTimeout,
+	String cacheInvalidationToken) {
 }
