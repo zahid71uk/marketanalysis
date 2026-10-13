@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.parcel.marketanalysis.client.EstimatorClientContextTest
 -------------------------------------------------------------------------------
-Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 3.652 s -- in com.parcel.marketanalysis.client.EstimatorClientContextTest
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.744 s -- in com.parcel.marketanalysis.client.EstimatorClientContextTest
