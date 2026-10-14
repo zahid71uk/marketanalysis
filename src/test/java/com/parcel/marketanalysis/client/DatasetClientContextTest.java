@@ -7,12 +7,14 @@ import static org.mockito.Mockito.verifyNoInteractions;
 
 import com.parcel.marketanalysis.config.MarketAnalysisProperties;
 import com.parcel.marketanalysis.service.MarketAnalysisService;
+import com.parcel.marketanalysis.web.MarketFilter;
 import com.parcel.marketanalysis.web.MarketAnalysisController;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.URI;
 import java.time.Duration;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import org.junit.jupiter.api.AfterAll;
@@ -35,10 +37,14 @@ class DatasetClientContextTest {
     private static final String TOKEN = "dataset-cache-test-token";
     private static final AtomicInteger REQUEST_COUNT = new AtomicInteger();
     private static final AtomicReference<Integer> PRICE = new AtomicReference<>(250_000);
+    private static final AtomicBoolean MODEL_LOADED = new AtomicBoolean(true);
     private static final HttpServer SERVER = startServer();
 
     @Autowired
     private DatasetClient datasetClient;
+
+    @Autowired
+    private MarketAnalysisService marketAnalysisService;
 
     @Autowired
     private TestRestTemplate restTemplate;
@@ -55,6 +61,7 @@ class DatasetClientContextTest {
         datasetClient.evictHousesCache();
         REQUEST_COUNT.set(0);
         PRICE.set(250_000);
+        MODEL_LOADED.set(true);
     }
 
     @AfterAll
@@ -79,6 +86,21 @@ class DatasetClientContextTest {
 
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
         assertThat(datasetClient.getHouses().getFirst().price()).isEqualTo(375_000);
+        assertThat(REQUEST_COUNT).hasValue(2);
+    }
+
+    @Test
+    void unavailableModelHidesAndEvictsPreviouslyCachedRows() {
+        var filter = new MarketFilter(null, null, null, null, null, null);
+        assertThat(marketAnalysisService.getSummary(filter).sampleSize()).isEqualTo(1);
+        assertThat(REQUEST_COUNT).hasValue(1);
+
+        MODEL_LOADED.set(false);
+        assertThat(marketAnalysisService.getSummary(filter).sampleSize()).isZero();
+
+        MODEL_LOADED.set(true);
+        PRICE.set(375_000);
+        assertThat(marketAnalysisService.getSummary(filter).meanPrice()).isEqualTo(375_000);
         assertThat(REQUEST_COUNT).hasValue(2);
     }
 
@@ -127,6 +149,14 @@ class DatasetClientContextTest {
     private static HttpServer startServer() {
         try {
             HttpServer server = HttpServer.create(new InetSocketAddress("127.0.0.1", 0), 0);
+            server.createContext("/health", exchange -> {
+                byte[] response = ("{\"status\":\"ok\",\"model_loaded\":" + MODEL_LOADED.get() + "}")
+                        .getBytes();
+                exchange.getResponseHeaders().set("Content-Type", "application/json");
+                exchange.sendResponseHeaders(200, response.length);
+                exchange.getResponseBody().write(response);
+                exchange.close();
+            });
             server.createContext("/api/v1/dataset/houses", exchange -> {
                 REQUEST_COUNT.incrementAndGet();
                 String body = """

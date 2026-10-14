@@ -1,5 +1,6 @@
 package com.parcel.marketanalysis.client;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.parcel.marketanalysis.exception.UpstreamUnavailableException;
 import com.parcel.marketanalysis.model.DatasetResponse;
 import com.parcel.marketanalysis.model.HousingRecord;
@@ -16,6 +17,18 @@ public class DatasetClient {
 
     public DatasetClient(RestClient datasetRestClient) {
         this.client = datasetRestClient;
+    }
+
+    public boolean isModelLoaded() {
+        try {
+            ModelHealthResponse response = client.get()
+                    .uri("/health")
+                    .retrieve()
+                    .body(ModelHealthResponse.class);
+            return response != null && response.modelLoaded();
+        } catch (RestClientException exception) {
+            throw new UpstreamUnavailableException("Dataset service", exception);
+        }
     }
 
     @Cacheable("housingDataset")
@@ -36,5 +49,8 @@ public class DatasetClient {
 
     @CacheEvict(cacheNames = "housingDataset", allEntries = true)
     public void evictHousesCache() {
+    }
+
+    private record ModelHealthResponse(@JsonProperty("model_loaded") boolean modelLoaded) {
     }
 }

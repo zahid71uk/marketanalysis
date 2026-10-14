@@ -25,7 +25,7 @@ public class MarketAnalysisService {
     }
 
     public MarketSummary getSummary(MarketFilter filter) {
-        List<HousingRecord> houses = filter(datasetClient.getHouses(), filter);
+        List<HousingRecord> houses = filter(getActiveHouses(), filter);
         if (houses.isEmpty()) {
             return new MarketSummary(0, 0, 0, 0, 0, 0, 0);
         }
@@ -48,7 +48,7 @@ public class MarketAnalysisService {
         } else if (!"asc".equalsIgnoreCase(direction)) {
             throw new IllegalArgumentException("Sort direction must be 'asc' or 'desc'.");
         }
-        List<HousingRecord> houses = filter(datasetClient.getHouses(), filter).stream()
+        List<HousingRecord> houses = filter(getActiveHouses(), filter).stream()
                 .sorted(comparator.thenComparingLong(HousingRecord::id))
                 .toList();
         int start = (int) Math.min((long) page * size, houses.size());
@@ -64,6 +64,14 @@ public class MarketAnalysisService {
 
     public void invalidateDatasetCache() {
         datasetClient.evictHousesCache();
+    }
+
+    private List<HousingRecord> getActiveHouses() {
+        if (!datasetClient.isModelLoaded()) {
+            datasetClient.evictHousesCache();
+            return List.of();
+        }
+        return datasetClient.getHouses();
     }
 
     private List<HousingRecord> filter(List<HousingRecord> houses, MarketFilter filter) {
