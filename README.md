@@ -22,6 +22,10 @@ The environment assignments select the user-local Temurin JDK for this PowerShel
 
 The service listens on `http://127.0.0.1:8082`. Its health endpoint is `http://127.0.0.1:8082/actuator/health`.
 
+## Logging
+
+Spring Boot application and upstream failures are logged to the terminal (stdout/stderr), not to project log files. `LOG_LEVEL` defaults to `INFO`; set it to `DEBUG`, `WARN`, or `ERROR` to change the root level. For a Docker run, use `docker logs -f marketanalysis`.
+
 ## Docker
 
 Build and run the image from this directory after starting `PricePredictionModel` and `valueestimator` on the `property-estimator` Docker network:

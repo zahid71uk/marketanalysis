@@ -45,11 +45,10 @@ public class EstimatorClient {
             }
             return response;
         } catch (RestClientResponseException exception) {
-            logger.warn("Estimate service returned HTTP {}: {}",
-                    exception.getStatusCode().value(), exception.getResponseBodyAsString());
+            logger.warn("Estimate service returned HTTP {}", exception.getStatusCode().value());
             throw new UpstreamUnavailableException("Estimate service", exception);
         } catch (RestClientException | IllegalStateException exception) {
-            logger.warn("Estimate service request failed: {}", exception.getMessage());
+            logger.warn("Estimate service request failed ({})", exception.getClass().getSimpleName());
             throw new UpstreamUnavailableException("Estimate service", exception);
         }
     }
